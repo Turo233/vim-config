@@ -30,25 +30,24 @@ endif
 set viewoptions=folds,cursor,curdir,slash,unix
 set sessionoptions=curdir,help,tabpages,winsize
 
-if has('mac') && has('vim_starting')
-	let g:clipboard = {
-		\   'name': 'macOS-clipboard',
-		\   'copy': {
-		\      '+': 'pbcopy',
-		\      '*': 'pbcopy',
-		\    },
-		\   'paste': {
-		\      '+': 'pbpaste',
-		\      '*': 'pbpaste',
-		\   },
-		\   'cache_enabled': 0,
-		\ }
-endif
+" if has('mac') && has('vim_starting')
+" 	let g:clipboard = {
+" 		\   'name': 'macOS-clipboard',
+" 		\   'copy': {
+" 		\      '+': 'pbcopy',
+" 		\      '*': 'pbcopy',
+" 		\    },
+" 		\   'paste': {
+" 		\      '+': 'pbpaste',
+" 		\      '*': 'pbpaste',
+" 		\   },
+" 		\   'cache_enabled': 0,
+" 		\ }
+" endif
 
-if has('clipboard') && has('vim_starting')
-	" set clipboard& clipboard+=unnamedplus
-	set clipboard& clipboard^=unnamed,unnamedplus
-endif
+" if has('clipboard') && has('vim_starting')
+" 	set clipboard& clipboard+=unnamedplus
+" endif
 
 " }}}
 " Wildmenu {{{
