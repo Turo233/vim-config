@@ -4,7 +4,7 @@
 " General {{{
 set mouse=nv                 " Disable mouse in command-line mode
 set modeline                 " automatically setting options from modelines
-set report=0                 " Don't report on line changes
+set report=2                 " Report on line changes
 set errorbells               " Trigger bell on error
 set visualbell               " Use visual bell instead of beeping
 set hidden                   " hide buffers when abandoned instead of unload
@@ -62,7 +62,6 @@ if has('wildmenu')
 	set wildignore+=*.jpg,*.jpeg,*.png,*.gif,*.zip,**/tmp/**,*.DS_Store
 	set wildignore+=**/node_modules/**,**/bower_modules/**,*/.sass-cache/*
 	set wildignore+=__pycache__,*.egg-info,.pytest_cache,.mypy_cache/**
-	set wildcharm=<C-z>  " substitue for 'wildchar' (<Tab>) in macros
 endif
 
 " }}}
@@ -79,9 +78,9 @@ set spellfile=$VIM_PATH/spell/en.utf-8.add
 set history=2000
 
 if has('nvim') && ! has('win32') && ! has('win64')
-	set shada=!,'300,<50,@100,s10,h
+	set shada=!,'100,<20,@100,s10,h,r/tmp,r/private/var
 else
-	set viminfo='300,<10,@50,h,n$DATA_PATH/viminfo
+	set viminfo='100,<20,@50,h,n$DATA_PATH/viminfo
 endif
 
 augroup user_persistent_undo
@@ -148,7 +147,7 @@ endif
 set timeout ttimeout
 set timeoutlen=500   " Time out on mappings
 set ttimeoutlen=10   " Time out on key codes
-set updatetime=200   " Idle time to write swap and trigger CursorHold
+set updatetime=400   " Idle time to write swap and trigger CursorHold
 set redrawtime=2000  " Time in milliseconds for stopping display redraw
 
 " }}}
@@ -168,10 +167,12 @@ endif
 
 if executable('rg')
 	set grepformat=%f:%l:%c:%m
-	let &grepprg = 'rg --vimgrep' . (&smartcase ? ' --smart-case' : '') . ' --'
+	let &grepprg =
+		\ 'rg --vimgrep --no-heading' . (&smartcase ? ' --smart-case' : '') . ' --'
 elseif executable('ag')
 	set grepformat=%f:%l:%c:%m
-	let &grepprg = 'ag --vimgrep' . (&smartcase ? ' --smart-case' : '') . ' --'
+	let &grepprg =
+		\ 'ag --vimgrep' . (&smartcase ? ' --smart-case' : '') . ' --'
 endif
 
 " }}}
@@ -183,24 +184,19 @@ set breakat=\ \	;:,!?           " Long lines break chars
 set nostartofline               " Cursor in same column for few commands
 set whichwrap+=h,l,<,>,[,],~    " Move to following line on certain keys
 set splitbelow splitright       " Splits open bottom right
-set switchbuf=useopen,vsplit    " Jump to the first open window
+" set switchbuf=useopen           " Look for matching window buffers first
 set backspace=indent,eol,start  " Intuitive backspacing in insert mode
 set diffopt=filler,iwhite       " Diff mode: show fillers, ignore whitespace
-set completeopt=menu,menuone    " Always show menu, even for one item
-set completeopt+=noselect       " Do not select a match in the menu
-
-if exists('+completepopup')
-	set completeopt+=popup
-	set completepopup=height:4,width:60,highlight:InfoPopup
-endif
+set completeopt=menuone         " Always show menu, even for one item
 
 if has('patch-7.4.775')
-	" Do not insert any text for a match until the user selects from menu
-	set completeopt+=noinsert
+	" Do not select a match in the menu.
+	" Do not insert any text for a match until the user selects from menu.
+	set completeopt+=noselect,noinsert
 endif
 
-if has('patch-8.1.0360') || has('nvim-0.4')
-	set diffopt+=internal,algorithm:patience
+if has('patch-8.1.0360') || has('nvim-0.5')
+	set diffopt=internal,algorithm:patience
 	" set diffopt=indent-heuristic,algorithm:patience
 endif
 
@@ -245,8 +241,8 @@ endif
 
 if has('nvim-0.4')
 	set signcolumn=auto:1
-else
-	set signcolumn=auto          " Always show signs column
+elseif exists('&signcolumn')
+	set signcolumn=auto
 endif
 
 " UI Symbols
@@ -266,17 +262,12 @@ if has('patch-7.4.1570')
 	set shortmess+=F
 endif
 
-if has('conceal') && v:version >= 703
-	" For snippet_complete marker
-	set conceallevel=2 concealcursor=niv
-endif
-
-if exists('+previewpopup')
-	set previewpopup=height:10,width:60
-endif
+" if exists('+previewpopup')
+" 	set previewpopup=height:10,width:60
+" endif
 
 " Pseudo-transparency for completion menu and floating windows
-if &termguicolors
+if has('termguicolors') && &termguicolors
 	if exists('&pumblend')
 		set pumblend=10
 	endif

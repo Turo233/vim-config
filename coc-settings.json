@@ -3,7 +3,10 @@
     "golang": {
       "command": "gopls",
       "rootPatterns": ["go.mod", ".vim/", ".git/", ".hg/"],
-      "filetypes": ["go"]
+      "filetypes": ["go"],
+      "initializationOptions": {
+        "usePlaceholders": true
+      }
     },
     "ccls": {
         "command": "ccls",
@@ -24,5 +27,6 @@
         }
     }
   },
-  "suggest.noselect": false
+  "suggest.noselect": false,
+  "python.formatting.provider": "black"
 }

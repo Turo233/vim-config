@@ -23,6 +23,15 @@ if has('termguicolors')
 	endif
 endif
 
+if ! has('nvim')
+	set t_Co=256
+	" Set Vim-specific sequences for RGB colors
+	" Fixes 'termguicolors' usage in vim+tmux
+	" :h xterm-true-color
+	let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+	let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+endif
+
 " Disable vim distribution plugins
 
 " let g:loaded_gzip = 1
@@ -41,6 +50,7 @@ let g:loaded_matchparen = 1
 let g:loaded_2html_plugin = 1
 let g:loaded_logiPat = 1
 let g:loaded_rrhelper = 1
+let g:no_gitrebase_maps = 1
 
 let g:loaded_netrw = 1
 let g:loaded_netrwPlugin = 1
@@ -79,6 +89,7 @@ function! s:main()
 		" When using VIMINIT trick for exotic MYVIMRC locations, add path now.
 		if &runtimepath !~# $VIM_PATH
 			set runtimepath^=$VIM_PATH
+			set runtimepath+=$VIM_PATH/after
 		endif
 
 		" Ensure data directories
@@ -87,19 +98,17 @@ function! s:main()
 				\ $DATA_PATH . '/undo',
 				\ $DATA_PATH . '/backup',
 				\ $DATA_PATH . '/session',
+				\ $DATA_PATH . '/swap',
 				\ $VIM_PATH . '/spell' ]
 			if ! isdirectory(s:path)
-				call mkdir(s:path, 'p')
+				call mkdir(s:path, 'p', 0770)
 			endif
 		endfor
 
 		" Python interpreter settings
 		if has('nvim')
-			" Try using pyenv virtualenv called 'neovim'
-			let l:virtualenv = ''
-			if ! empty($PYENV_ROOT)
-				let l:virtualenv = $PYENV_ROOT . '/versions/neovim/bin/python'
-			endif
+			" Try the virtualenv created by venv.sh
+			let l:virtualenv = $DATA_PATH . '/venv/bin/python'
 			if empty(l:virtualenv) || ! filereadable(l:virtualenv)
 				" Fallback to old virtualenv location
 				let l:virtualenv = $DATA_PATH . '/venv/neovim3/bin/python'
@@ -121,6 +130,7 @@ function! s:main()
 	call s:use_{s:package_manager}()
 endfunction
 
+" Use dein as a plugin manager
 function! s:use_dein()
 	let l:cache_path = $DATA_PATH . '/dein'
 
@@ -156,8 +166,13 @@ function! s:use_dein()
 
 		" Start propagating file paths and plugin presets
 		call dein#begin(l:cache_path, extend([expand('<sfile>')], s:config_paths))
+
 		for plugin in l:rc
-			call dein#add(plugin['repo'], extend(plugin, {}, 'keep'))
+			" If vim already started, don't re-add existing ones
+			if has('vim_starting')
+					\ || ! has_key(g:dein#_plugins, fnamemodify(plugin['repo'], ':t'))
+				call dein#add(plugin['repo'], extend(plugin, {}, 'keep'))
+			endif
 		endfor
 
 		" Add any local ./dev plugins
@@ -180,16 +195,10 @@ function! s:use_dein()
 		endif
 	endif
 
-	filetype plugin indent on
-
-	" Only enable syntax when vim is starting
-	if has('vim_starting')
+	if has('vim_starting') && ! has('nvim')
+		filetype plugin indent on
 		syntax enable
 	endif
-
-	" Trigger source event hooks
-	call dein#call_hook('source')
-	call dein#call_hook('post_source')
 endfunction
 
 function! s:use_plug() abort
@@ -318,7 +327,7 @@ function! s:load_yaml(filename)
 	elseif s:convert_tool ==# 'python'
 		let l:cmd = "python -c 'import sys,yaml,json; y=yaml.safe_load(sys.stdin.read()); print(json.dumps(y))'"
 	elseif s:convert_tool ==# 'yq'
-		let l:cmd = 'yq r -j -'
+		let l:cmd = 'yq e -j -I 0'
 	else
 		let l:cmd = s:convert_tool
 	endif
